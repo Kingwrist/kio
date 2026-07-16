@@ -1,37 +1,16 @@
-# Krimpen In & Out
+# KIO Nu — live versie
 
-Mobile-first Next.js/PWA dashboard voor verkeer rond Krimpen aan den IJssel.
+Mobile-first Next.js dashboard voor verkeer rond Krimpen aan den IJssel.
 
-## Starten
+## In deze versie
+- KIO-druktescore
+- Live uitlezen van openbare NDW gzip/XML-feeds
+- Statuscontrole van veerdiensten
+- Ingesloten officiële gemeentepagina met verkeerscamera's, plus fallback-link
+- Automatisch vernieuwen iedere 60 seconden
 
-```bash
-npm install
-npm run dev
-```
-
-## Deployen op Vercel
-
-1. Zet deze map in GitHub.
-2. Importeer de repository in Vercel.
-3. Framework preset: Next.js.
-4. Deploy.
-
-## Pushmeldingen
-
-De interface vraagt al notificatierechten. Voor echte push naar alle abonnees is OneSignal voorbereid:
-
-- Maak gratis een OneSignal Web Push app.
-- Voeg de OneSignal Web SDK toe volgens hun actuele handleiding.
-- Stel in Vercel in: `ONESIGNAL_APP_ID`, `ONESIGNAL_REST_API_KEY`, `NEXT_PUBLIC_SITE_URL`.
-- Beveilig `/api/push` voordat je deze route publiek gebruikt, bijvoorbeeld met een admin-token of Vercel Authentication.
-
-## Live data
-
-- Veerstatus wordt server-side gecontroleerd op de officiële websites en elke minuut vernieuwd.
-- Verkeerskaarten linken naar Rijkswaterstaat/NDW.
-- Voor echte druktescores per weg kun je later NDW DATEX II of TomTom Traffic Flow koppelen.
-- Camera’s staan als officiële externe bronnen. Direct embedden kan alleen wanneer de bron dit technisch en juridisch toestaat.
+## Publiceren
+Vervang de bestanden in je lokale GitHub Desktop-map, commit en push. Vercel bouwt daarna automatisch.
 
 ## Belangrijk
-
-Websites kunnen hun HTML wijzigen. Gebruik op termijn officiële API’s of afspraken met de veerbedrijven voor een robuuste statusfeed.
+De NDW-koppeling is een eerste bèta. De route `/api/live` controleert de actuele feeds en zoekt regionale tekstverwijzingen. Exacte meetpunt- en trajectkoppelingen worden in een volgende versie toegevoegd.
