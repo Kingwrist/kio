@@ -1,15 +1,13 @@
-# KIO v2 – overzichtsapp
+# KIO v3 — OpenStreetMap + live camera
 
-Mobile-first verkeersoverzicht voor Krimpen aan den IJssel.
+Mobiele Next.js-app met:
+- OpenStreetMap-overzicht van 10 lokale corridors;
+- aanklikbare routes met groen/oranje/rood/grijs;
+- detailblad met aanrij-, vertraging-, wacht- en oversteektijd;
+- aparte Algerabrug-corridors voor hoofdweg, wisselstrook en fietsbrug;
+- ponten bij Krimpen aan de Lek, Lekkerkerk, Ouderkerk, Bergstoep en Gouderak;
+- Stormpolder Fast Ferry en Watertaxi;
+- HLS-camera GKR 01;
+- NDW-controle voor Algerabrugmeldingen en brugopeningen.
 
-## Wat is veranderd
-- Geen kunstmatige 0–100 score.
-- Schematische, aanklikbare kaart met in- en uitgangen.
-- Detailvenster per corridor.
-- Aparte NDW-feed voor brugopeningen.
-- Geen druktestatus op basis van tekst-aantallen.
-- Camera-extractor probeert de echte embeds/snapshots van de gemeentepagina te vinden.
-- Onbetrouwbare informatie blijft `onbekend`.
-
-## Bekende beperking
-Exacte doorstroomminuten vereisen koppeling van de lokale corridors aan specifieke NDW MeasurementSiteTable/TravelTime-referenties. De interface is hiervoor voorbereid, maar toont tot die koppeling geen verzonnen minuten.
+Exacte totaaltijden worden alleen getoond wanneer de corridor een bruikbare live status heeft. Onvoldoende betrouwbare data blijft grijs.
