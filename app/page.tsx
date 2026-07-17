@@ -1,105 +1,88 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Bell, Bike, Camera, Car, ExternalLink, Gauge, Map, RefreshCw, Ship, TriangleAlert, Wifi, WifiOff } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Camera, ChevronRight, Clock3, RefreshCw, Route, Ship, X } from 'lucide-react';
 
-type FerryItem = { id:string; name:string; status:'vaart'|'storing'|'onbekend'|'controleer'; source:string };
-type LiveFeed = { id:string; label:string; ok:boolean; bytes:number; matches:{keyword:string;hits:number}[]; error?:string };
-type LiveData = { updatedAt:string; source:string; availableFeeds:number; totalFeeds:number; matchedHits:number; feeds:LiveFeed[] };
+type RouteItem = { id:string; label:string; status:'groen'|'oranje'|'rood'|'onbekend'; flowMinutes:number|null; message:string; details:string[] };
+type LiveData = { updatedAt:string; bridge:{status:string;label:string}; routes:RouteItem[]; limitations:string };
+type CameraData = { cameras:{id:string;type:string;name:string;url:string}[]; images:string[]; source:string };
+type FerryItem = { id:string; name:string; status:string; source:string };
 
-const roads = [
-  {name:'Algerabrug / N210', detail:'NDW live feeds + officiële projectinformatie', level:'groen', href:'https://www.rwsverkeersinfo.nl/'},
-  {name:'Stormpolder / Industrieweg', detail:'Controleer actuele snelheid en incidenten', level:'geel', href:'https://www.rwsverkeersinfo.nl/'},
-  {name:'N210 richting Capelle', detail:'Actuele files, snelheid en incidenten', level:'groen', href:'https://www.rwsverkeersinfo.nl/'},
-  {name:'A16 / A20 aansluiting', detail:'Actuele verkeerskaart Rijkswaterstaat', level:'groen', href:'https://www.rwsverkeersinfo.nl/'}
+const paths: Record<string,string> = {
+  'n210-west':'M55 128 C115 126 160 120 218 111',
+  'algerabrug':'M218 111 C244 105 265 88 284 62',
+  'stormpolder':'M218 111 C249 126 272 144 302 169',
+  'n210-east':'M55 128 C98 157 137 176 191 188 C239 199 283 199 335 188',
+};
+
+const fallbackRoutes: RouteItem[] = [
+  {id:'n210-west',label:'N210 → Capelle',status:'onbekend',flowMinutes:null,message:'Live data laden…',details:[]},
+  {id:'algerabrug',label:'Algerabrug',status:'onbekend',flowMinutes:null,message:'Live data laden…',details:[]},
+  {id:'stormpolder',label:'Stormpolder',status:'onbekend',flowMinutes:null,message:'Live data laden…',details:[]},
+  {id:'n210-east',label:'N210 → Krimpenerwaard',status:'onbekend',flowMinutes:null,message:'Live data laden…',details:[]},
 ];
 
-function Dot({status}:{status:string}) { return <span className={`dot ${status}`} /> }
+export default function Home(){
+  const [live,setLive]=useState<LiveData|null>(null);
+  const [ferries,setFerries]=useState<FerryItem[]>([]);
+  const [cameras,setCameras]=useState<CameraData|null>(null);
+  const [selected,setSelected]=useState<RouteItem|null>(null);
+  const [loading,setLoading]=useState(false);
 
-export default function Home() {
-  const [ferries,setFerries] = useState<FerryItem[]>([]);
-  const [live,setLive] = useState<LiveData|null>(null);
-  const [updated,setUpdated] = useState('');
-  const [loading,setLoading] = useState(true);
-  const [cameraReady,setCameraReady] = useState(false);
-
-  async function load() {
+  async function load(){
     setLoading(true);
-    try {
-      const [statusResponse, liveResponse] = await Promise.all([
-        fetch('/api/status',{cache:'no-store'}),
-        fetch('/api/live',{cache:'no-store'}),
-      ]);
-      const statusData = await statusResponse.json();
-      const liveData = await liveResponse.json();
-      setFerries(statusData.ferries ?? []);
-      setLive(liveData);
-      setUpdated(new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+    try{
+      const [l,s,c]=await Promise.all([fetch('/api/live',{cache:'no-store'}),fetch('/api/status',{cache:'no-store'}),fetch('/api/cameras',{cache:'no-store'})]);
+      setLive(await l.json());
+      const status=await s.json(); setFerries(status.ferries??[]);
+      setCameras(await c.json());
     } finally { setLoading(false); }
   }
+  useEffect(()=>{load();const t=setInterval(load,60000);return()=>clearInterval(t)},[]);
 
-  useEffect(()=>{ load(); const timer=setInterval(load,60000); return()=>clearInterval(timer); },[]);
-
-  const score = useMemo(() => {
-    const ferryPenalty = ferries.reduce((sum,ferry) => sum + (ferry.status==='storing'?25:ferry.status==='onbekend'||ferry.status==='controleer'?5:0),0);
-    const feedPenalty = live ? Math.max(0,(live.totalFeeds-live.availableFeeds)*10) : 15;
-    const activityPenalty = live ? Math.min(30,live.matchedHits*2) : 0;
-    return Math.min(100, ferryPenalty + feedPenalty + activityPenalty);
-  },[ferries,live]);
-
-  const level = score <= 20 ? {label:'Rustig',className:'calm',advice:'De bekende bronnen tonen geen grote verstoring.'}
-    : score <= 40 ? {label:'Druk',className:'busy',advice:'Controleer je route en vertrek met wat extra tijd.'}
-    : score <= 70 ? {label:'Erg druk',className:'heavy',advice:'Overweeg een pont of een later vertrekmoment.'}
-    : {label:'Ernstige verstoring',className:'chaos',advice:'Controleer officiële bronnen voordat je vertrekt.'};
-
-  async function enablePush() {
-    if (!('Notification' in window)) return alert('Pushmeldingen worden niet ondersteund op dit apparaat.');
-    const result=await Notification.requestPermission();
-    if(result==='granted') new Notification('KIO meldingen ingeschakeld',{body:'Je browser mag nu meldingen tonen. De centrale pushdienst koppelen we in een volgende stap.'});
-  }
+  const routes=live?.routes??fallbackRoutes;
+  const updated=live?.updatedAt?new Date(live.updatedAt).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'—';
 
   return <main>
-    <header className="hero">
-      <div><div className="eyebrow">KIO LIVE</div><h1>Krimpen<br/><span>In & Out</span></h1><p>Brug, ponten, wegen en camera’s op één mobiele pagina.</p></div>
-      <button className="bell" onClick={enablePush} aria-label="Pushmeldingen"><Bell size={21}/></button>
-    </header>
+    <header className="topbar"><div><span className="brand">KIO</span><h1>Krimpen in & uit</h1><p>Actuele doorstroming rond de Algerabrug</p></div><button onClick={load} aria-label="Vernieuwen"><RefreshCw className={loading?'spin':''}/></button></header>
 
-    <section className={`scoreCard ${level.className}`}>
-      <div className="scoreTop"><div><span className="livePill"><span/>LIVE</span><h2>{level.label}</h2><p>{level.advice}</p></div><div className="scoreRing" style={{'--score':`${score*3.6}deg`} as React.CSSProperties}><strong>{score}</strong><small>/100</small></div></div>
-      <div className="scoreBar"><span style={{width:`${score}%`}}/></div>
-      <div className="sourceLine">{live?.availableFeeds===live?.totalFeeds?<Wifi size={15}/>:<WifiOff size={15}/>} NDW {live?.availableFeeds ?? 0}/{live?.totalFeeds ?? 3} feeds beschikbaar</div>
-    </section>
+    <section className="update"><span className="pulse"/> Live bronnen · bijgewerkt {updated}</section>
 
-    <section className="alert"><TriangleAlert/><div><strong>Algerabrug: groot onderhoud vanaf 10 augustus 2026</strong><span>Vier weken dicht voor autoverkeer. Controleer de officiële projectinformatie voor actuele details.</span></div></section>
-
-    <div className="meta"><span>Bijgewerkt {updated || '—'} · automatisch elke minuut</span><button onClick={load}><RefreshCw size={15} className={loading?'spin':''}/> Vernieuwen</button></div>
-
-    <section><div className="sectionTitle"><Gauge/><h2>NDW live verkeer</h2></div>
-      <div className="liveGrid">
-        {live?.feeds?.map(feed=><div className="liveCard" key={feed.id}><div className="liveHead"><Dot status={feed.ok?'groen':'rood'}/><strong>{feed.label}</strong></div><small>{feed.ok?`${Math.round(feed.bytes/1024).toLocaleString('nl-NL')} kB live data verwerkt`:`Bron tijdelijk niet bereikbaar`}</small><div className="matchLine">{feed.matches.length?feed.matches.slice(0,3).map(m=><span key={m.keyword}>{m.keyword}: {m.hits}</span>):<span>Geen lokale tekstmatch in deze feed</span>}</div></div>)}
+    <section className="mapCard">
+      <div className="sectionHead"><div><span className="kicker">OVERZICHT</span><h2>Ingangen en uitgangen</h2></div><span className="legend"><i className="green"/> vrij <i className="orange"/> hinder <i className="red"/> dicht</span></div>
+      <div className="routeMap">
+        <svg viewBox="0 0 390 245" role="img" aria-label="Schematische verkeerskaart rond Krimpen">
+          <path className="river" d="M0 72 C85 40 140 77 205 58 C273 38 321 19 390 33 L390 0 L0 0Z"/>
+          <text x="26" y="45" className="waterLabel">Hollandsche IJssel</text>
+          {routes.map(route=><g key={route.id} onClick={()=>setSelected(route)} className="clickRoad">
+            <path d={paths[route.id]} className="roadBase"/>
+            <path d={paths[route.id]} className={`roadFlow ${route.status}`}/>
+          </g>)}
+          <circle cx="55" cy="128" r="8" className="node"/><text x="20" y="112">Capelle</text>
+          <circle cx="218" cy="111" r="10" className="hub"/><text x="176" y="96">Krimpen</text>
+          <circle cx="284" cy="62" r="8" className="node"/><text x="292" y="60">Rotterdam</text>
+          <circle cx="302" cy="169" r="8" className="node"/><text x="307" y="164">Stormpolder</text>
+          <circle cx="335" cy="188" r="8" className="node"/><text x="275" y="218">Krimpenerwaard</text>
+          <text x="228" y="78" className="bridgeLabel">Algerabrug</text>
+        </svg>
+        <div className="routeChips">{routes.map(route=><button key={route.id} onClick={()=>setSelected(route)}><span className={`statusDot ${route.status}`}/><b>{route.label}</b><small>{route.flowMinutes!==null?`${route.flowMinutes} min`:route.message}</small><ChevronRight/></button>)}</div>
       </div>
-      <p className="betaNote">Bèta: KIO leest de openbare NDW-feeds live uit. In de volgende stap koppelen we exacte meetlocaties en reistijdvakken rond de Algerabrug.</p>
+      <p className="dataNote">Minuten verschijnen alleen bij een exact gekoppeld NDW-reistijdvak. KIO toont geen verzonnen wachttijden.</p>
     </section>
 
-    <section><div className="sectionTitle"><Ship/><h2>Veerponten</h2></div><div className="stack">
-      {ferries.map(f=><a className="card row" key={f.id} href={f.source} target="_blank" rel="noreferrer"><div><Dot status={f.status}/><strong>{f.name}</strong><small>{f.status==='vaart'?'Vaart volgens gepubliceerde informatie':f.status==='storing'?'Mogelijke stremming':'Open officiële bron voor actuele status'}</small></div><ExternalLink size={17}/></a>)}
+    <section><div className="sectionHead"><div><span className="kicker">OVERSTEKEN</span><h2>Veerponten</h2></div><Ship/></div><div className="ferryGrid">
+      {ferries.map(f=><article key={f.id}><span className={`statusDot ${f.status==='vaart'?'groen':f.status==='storing'?'rood':'onbekend'}`}/><div><b>{f.name}</b><small>{f.status==='vaart'?'Vaart volgens actuele publicatie':f.status==='storing'?'Uit de vaart / storing':'Status niet betrouwbaar vastgesteld'}</small></div></article>)}
+      {!ferries.length&&<article><span className="statusDot onbekend"/><div><b>Pontstatus laden</b><small>Even geduld…</small></div></article>}
     </div></section>
 
-    <section><div className="sectionTitle"><Car/><h2>Hoofdroutes</h2></div><div className="stack">
-      {roads.map(r=><a className="card row" key={r.name} href={r.href} target="_blank" rel="noreferrer"><div><Dot status={r.level}/><strong>{r.name}</strong><small>{r.detail}</small></div><ExternalLink size={17}/></a>)}
-    </div></section>
-
-    <section><div className="sectionTitle"><Camera/><h2>Verkeerscamera’s</h2></div>
-      <div className="cameraEmbed">
-        {!cameraReady&&<div className="cameraLoading"><Camera size={34}/><strong>Gemeentecamera’s laden…</strong><small>Als insluiten wordt geblokkeerd, gebruik de knop onder het beeld.</small></div>}
-        <iframe title="Verkeerscamera's Krimpen aan den IJssel" src="https://krimpenaandenijssel.nl/verkeerscameras/" onLoad={()=>setCameraReady(true)} loading="lazy" referrerPolicy="no-referrer-when-downgrade"/>
-      </div>
-      <a className="officialButton" href="https://krimpenaandenijssel.nl/verkeerscameras/" target="_blank" rel="noreferrer"><Camera size={18}/> Open officiële camera’s <ExternalLink size={15}/></a>
-      <p className="betaNote">De camera’s blijven eigendom van de gemeente. KIO toont de officiële pagina of verwijst er rechtstreeks naartoe.</p>
+    <section><div className="sectionHead"><div><span className="kicker">LIVE BEELD</span><h2>Verkeerscamera’s</h2></div><Camera/></div>
+      {cameras?.cameras?.length ? <div className="cameraGrid">{cameras.cameras.slice(0,2).map(cam=><div className="cameraFrame" key={cam.id}><iframe src={cam.url} title={cam.name} allow="autoplay; fullscreen"/><span>{cam.name} · officiële bron</span></div>)}</div> :
+      cameras?.images?.length ? <div className="cameraGrid">{cameras.images.slice(0,2).map((src,i)=><div className="cameraFrame" key={src}><img src={src} alt={`Verkeerscamera ${i+1}`}/><span>Camera {i+1} · officiële bron</span></div>)}</div> :
+      <div className="cameraUnavailable"><Camera/><b>Camera-embed niet gevonden</b><p>De gemeentepagina levert momenteel geen herbruikbare stream of snapshot aan de server. KIO toont daarom geen kapotte iframe.</p></div>}
     </section>
 
-    <section className="quick"><a href="https://www.rwsverkeersinfo.nl/" target="_blank" rel="noreferrer"><Map/>Verkeerskaart</a><a href="https://9292.nl/" target="_blank" rel="noreferrer"><Bike/>OV & fiets</a></section>
+    <footer>NDW wordt iedere minuut gecontroleerd · geen puntenscore · onbekende data blijft onbekend</footer>
 
-    <footer>Krimpen In & Out · NDW en publieke officiële bronnen · controleer voor vertrek altijd de bron</footer>
+    {selected&&<div className="sheetBackdrop" onClick={()=>setSelected(null)}><aside className="detailSheet" onClick={e=>e.stopPropagation()}><button className="close" onClick={()=>setSelected(null)}><X/></button><span className={`statusBadge ${selected.status}`}>{selected.status==='groen'?'Goede doorstroming':selected.status==='oranje'?'Hinder':selected.status==='rood'?'Afgesloten / zware hinder':'Onbekend'}</span><h2>{selected.label}</h2><div className="timeBox"><Clock3/><div><small>Doorstroomtijd</small><strong>{selected.flowMinutes!==null?`${selected.flowMinutes} minuten`:'Nog geen exact reistijdvak'}</strong></div></div><p>{selected.message}</p>{selected.details.length>0&&<div className="details"><b>Actuele NDW-meldingen</b>{selected.details.map((d,i)=><p key={i}>{d}</p>)}</div>}<div className="source"><Route/> Bron: NDW Open Data · laatste controle {updated}</div></aside></div>}
   </main>
 }
