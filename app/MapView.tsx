@@ -1,11 +1,22 @@
 'use client';
-import { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Tooltip, ZoomControl, useMap } from 'react-leaflet';
+import { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Tooltip, ZoomControl, useMap, Polyline, CircleMarker, Popup } from 'react-leaflet';
 import { DivIcon } from 'leaflet';
 import type { Corridor, CorridorStatus } from './corridors';
 
 type LiveCorridor=Corridor&{status:CorridorStatus;delayMinutes:number|null;message:string;details:string[]};
 const colors:Record<CorridorStatus,string>={groen:'#16a565',oranje:'#ef8d24',rood:'#dc3f43',onbekend:'#8f9b95'};
+
+type NdwFeature={id:string;name:string;road:string|null;coordinates:[number,number][];speedKmh:number|null;travelTimeSeconds:number|null;measurementTime:string|null;status:CorridorStatus};
+function NdwLayer(){
+ const [features,setFeatures]=useState<NdwFeature[]>([]);
+ useEffect(()=>{let alive=true;const load=()=>fetch('/api/ndw-traffic',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(alive)setFeatures(d.features||[])}).catch(()=>{});load();const t=setInterval(load,60000);return()=>{alive=false;clearInterval(t)}},[]);
+ return <>{features.map(f=>{
+  const c=colors[f.status]; const body=<Popup><div className="trafficPopup"><b>{f.road||f.name}</b>{f.speedKmh!==null&&<span>Actuele snelheid: {Math.round(f.speedKmh)} km/u</span>}{f.travelTimeSeconds!==null&&<span>Reistijd: {Math.round(f.travelTimeSeconds/60)} min</span>}<small>NDW meetlocatie {f.id}</small></div></Popup>;
+  return f.coordinates.length>1?<Polyline key={f.id} positions={f.coordinates} pathOptions={{color:c,weight:8,opacity:.9}}>{body}</Polyline>:<CircleMarker key={f.id} center={f.coordinates[0]} radius={7} pathOptions={{color:'#fff',weight:2,fillColor:c,fillOpacity:1}}>{body}</CircleMarker>
+ })}</>;
+}
+
 
 function Focus({item}:{item:LiveCorridor|null}){
  const map=useMap();
@@ -37,8 +48,7 @@ export default function MapView({items,selected,onSelect}:{items:LiveCorridor[];
  return <MapContainer center={[51.932,4.650]} zoom={11} minZoom={10} maxZoom={18} zoomControl={false} className="osmMap">
   <ZoomControl position="bottomright"/><Focus item={selected}/>
   <TileLayer attribution={attribution} url={tileUrl}/>
-  {/* Verkeerslijnen tijdelijk verborgen: geen handmatig getekende geometrie tonen.
-      Ze komen terug zodra echte OSM/NDW-segmentgeometrie is gekoppeld. */}
+  <NdwLayer/>
   <Marker position={[51.9168,4.58032]} icon={algeraIcon(algera)} eventHandlers={{click:()=>onSelect(algera.find(i=>i.id==='algera-main')!)}}>
    <Tooltip direction="top" offset={[0,-28]}><strong>Algerabrug</strong><br/>Tik voor live info</Tooltip>
   </Marker>
