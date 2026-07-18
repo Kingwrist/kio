@@ -17,3 +17,8 @@ De kaart- en datastructuur is gebouwd, maar de exacte NDW-meetvak-ID's en rijric
 ## Transport Map
 
 Stel optioneel `NEXT_PUBLIC_THUNDERFOREST_API_KEY` in op Vercel. Zonder sleutel valt de app terug op standaard OpenStreetMap.
+
+
+## v12 kaartcorrectie
+- Algerabrug-statusmarker verplaatst naar 51.9168, 4.58032.
+- Verkeerslagen eindigen nu bij deze bruglocatie en zijn opnieuw uitgelijnd.

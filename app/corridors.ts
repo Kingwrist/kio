@@ -21,26 +21,26 @@ export type TrafficSegment = {
 export const trafficSegments: TrafficSegment[] = [
   {
     id:'segment-industrieweg', corridorId:'algera-industrieweg', name:'Industrieweg', direction:'Krimpen uit → hoofdrijbaan',
-    path:[[51.9094,4.6064],[51.9111,4.6056],[51.9132,4.6048],[51.9150,4.6036],[51.9164,4.6022],[51.9170,4.6008]],
+    path:[[51.9094,4.6064],[51.9111,4.6048],[51.9131,4.6019],[51.9147,4.5966],[51.9158,4.5897],[51.9168,4.58032]],
     accessNote:'Alleen naar de hoofdrijbaan; geen toegang tot de wisselstrook.'
   },
   {
     id:'segment-cg-roosweg', corridorId:'algera-cg-roosweg', name:'C.G. Roosweg', direction:'Krimpen uit → hoofdrijbaan',
-    path:[[51.9251,4.6110],[51.9231,4.6097],[51.9208,4.6074],[51.9189,4.6048],[51.9177,4.6022],[51.9170,4.6008]],
+    path:[[51.9251,4.6110],[51.9230,4.6078],[51.9207,4.6028],[51.9189,4.5968],[51.9178,4.5898],[51.9168,4.58032]],
     accessNote:'Alleen naar de hoofdrijbaan; geen toegang tot de wisselstrook.'
   },
   {
     id:'segment-nieuwe-tiendweg', corridorId:'algera-nieuwe-tiendweg', name:'Nieuwe Tiendweg', direction:'Krimpen uit → hoofdrijbaan',
-    path:[[51.9280,4.6258],[51.9268,4.6220],[51.9254,4.6186],[51.9238,4.6145],[51.9217,4.6102],[51.9195,4.6062],[51.9178,4.6024],[51.9170,4.6008]],
+    path:[[51.9280,4.6258],[51.9268,4.6220],[51.9253,4.6172],[51.9235,4.6113],[51.9212,4.6049],[51.9193,4.5982],[51.9179,4.5907],[51.9168,4.58032]],
     accessNote:'Aanvoer voor zowel de hoofdrijbaan als de wisselstrook.'
   },
   {
     id:'segment-hoofdrijbaan', corridorId:'algera-main', name:'Algerabrug hoofdrijbaan', direction:'Krimpen uit → Capelle',
-    path:[[51.9170,4.6008],[51.9168,4.5986],[51.9165,4.5960],[51.9160,4.5933]],
+    path:[[51.9168,4.58032],[51.9168,4.5779],[51.9167,4.5749],[51.9165,4.5718]],
   },
   {
     id:'segment-wisselstrook', corridorId:'algera-lane', name:'Wisselstrook', direction:'Krimpen uit',
-    path:[[51.9211,4.6092],[51.9194,4.6058],[51.9179,4.6022],[51.9172,4.6005],[51.9168,4.5982],[51.9165,4.5956]],
+    path:[[51.9211,4.6092],[51.9195,4.6037],[51.9182,4.5974],[51.9174,4.5904],[51.9169,4.5835],[51.9168,4.58032],[51.9167,4.5768],[51.9165,4.5736]],
     accessNote:'Alleen bereikbaar via de Nieuwe Tiendweg. Niet via C.G. Roosweg of Industrieweg.',
     heightLimitMeters:1.8,
     switchLane:true,
@@ -48,9 +48,9 @@ export const trafficSegments: TrafficSegment[] = [
 ];
 
 export const corridors: Corridor[] = [
- {id:'algera-main',name:'Algerabrug',subtitle:'Hoofdweg auto',mode:'auto',kind:'weg',point:[51.9170,4.6008]},
- {id:'algera-lane',name:'Algerabrug',subtitle:'Wisselstrook',mode:'auto',kind:'weg',point:[51.9175,4.6003]},
- {id:'algera-bike',name:'Algerabrug',subtitle:'Fietsbrug',mode:'fiets',kind:'weg',point:[51.9163,4.6002]},
+ {id:'algera-main',name:'Algerabrug',subtitle:'Hoofdweg auto',mode:'auto',kind:'weg',point:[51.9168,4.58032]},
+ {id:'algera-lane',name:'Algerabrug',subtitle:'Wisselstrook',mode:'auto',kind:'weg',point:[51.9168,4.58032]},
+ {id:'algera-bike',name:'Algerabrug',subtitle:'Fietsbrug',mode:'fiets',kind:'weg',point:[51.9168,4.58032]},
  {id:'algera-industrieweg',name:'Industrieweg',subtitle:'Aanvoer naar Algerabrug · Krimpen uit',mode:'auto',kind:'weg',point:[51.9127,4.6048]},
  {id:'algera-cg-roosweg',name:'C.G. Roosweg',subtitle:'Aanvoer naar Algerabrug · Krimpen uit',mode:'auto',kind:'weg',point:[51.9206,4.6073]},
  {id:'algera-nieuwe-tiendweg',name:'Nieuwe Tiendweg',subtitle:'Aanvoer naar Algerabrug · Krimpen uit',mode:'auto',kind:'weg',point:[51.9252,4.6185]},
