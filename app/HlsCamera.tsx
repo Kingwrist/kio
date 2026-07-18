@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Camera, Maximize2, RefreshCw, Volume2, VolumeX } from 'lucide-react';
 
-const STREAM_URL = 'https://stream.inmoves.nl/rtplive/GKR_01.stream/playlist.m3u8';
+const STREAM_URL = '/api/camera-proxy';
 
 export default function HlsCamera() {
   const videoRef = useRef<HTMLVideoElement>(null);
