@@ -1,21 +1,31 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Camera, Maximize2, RefreshCw, Volume2, VolumeX } from 'lucide-react';
+import { Camera, Maximize2, RefreshCw, Volume2, VolumeX, X } from 'lucide-react';
 
-const STREAM_URL = '/api/camera-proxy';
+export type CameraFeed = {
+  id: 'GKR_01' | 'GKR_02' | 'GKR_03' | 'GKR_04';
+  name: string;
+  description: string;
+};
 
-export default function HlsCamera() {
+type Props = {
+  camera: CameraFeed;
+  onClose: () => void;
+};
+
+export default function HlsCamera({ camera, onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<{ destroy: () => void } | null>(null);
   const [state, setState] = useState<'loading' | 'playing' | 'error'>('loading');
   const [muted, setMuted] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
+  const streamUrl = `/api/camera-proxy?camera=${camera.id}`;
 
   useEffect(() => {
     let cancelled = false;
     if (!videoRef.current) return;
-    const media: HTMLVideoElement = videoRef.current;
+    const media = videoRef.current as HTMLVideoElement;
 
     setState('loading');
     media.muted = muted;
@@ -23,14 +33,13 @@ export default function HlsCamera() {
     async function start() {
       try {
         if (media.canPlayType('application/vnd.apple.mpegurl')) {
-          media.src = STREAM_URL;
+          media.src = streamUrl;
           await media.play().catch(() => undefined);
           return;
         }
 
         const { default: Hls } = await import('hls.js');
         if (cancelled) return;
-
         if (!Hls.isSupported()) {
           setState('error');
           return;
@@ -38,24 +47,20 @@ export default function HlsCamera() {
 
         const hls = new Hls({
           lowLatencyMode: true,
-          backBufferLength: 30,
+          backBufferLength: 12,
           liveSyncDurationCount: 3,
           liveMaxLatencyDurationCount: 8,
           enableWorker: true,
         });
         hlsRef.current = hls;
-        hls.loadSource(STREAM_URL);
+        hls.loadSource(streamUrl);
         hls.attachMedia(media);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          media.play().catch(() => undefined);
-        });
+        hls.on(Hls.Events.MANIFEST_PARSED, () => media.play().catch(() => undefined));
         hls.on(Hls.Events.ERROR, (_event, data) => {
           if (!data.fatal) return;
-          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-            hls.startLoad();
-          } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-            hls.recoverMediaError();
-          } else {
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
+          else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
+          else {
             setState('error');
             hls.destroy();
           }
@@ -82,56 +87,40 @@ export default function HlsCamera() {
       media.removeEventListener('error', onError);
       hlsRef.current?.destroy();
       hlsRef.current = null;
+      media.pause();
       media.removeAttribute('src');
       media.load();
     };
-  }, [reloadKey]);
+  }, [camera.id, reloadKey, streamUrl]);
 
   useEffect(() => {
     if (videoRef.current) videoRef.current.muted = muted;
   }, [muted]);
 
   async function fullscreen() {
-    const element = videoRef.current;
-    if (element?.requestFullscreen) await element.requestFullscreen();
+    if (videoRef.current?.requestFullscreen) await videoRef.current.requestFullscreen();
   }
 
   return (
-    <div className="liveCamera">
-      <video
-        ref={videoRef}
-        className="liveCameraVideo"
-        playsInline
-        autoPlay
-        muted={muted}
-        controls={false}
-        aria-label="Live verkeerscamera Krimpen aan den IJssel"
-      />
-
-      <div className="cameraTopline">
-        <span className={`livePill ${state}`}><i /> {state === 'playing' ? 'LIVE' : state === 'loading' ? 'VERBINDEN' : 'NIET BESCHIKBAAR'}</span>
-        <span>Camera GKR 01</span>
+    <div className="cameraViewer">
+      <div className="cameraViewerHead">
+        <div><b>{camera.name}</b><small>{camera.description}</small></div>
+        <button onClick={onClose} aria-label="Camera sluiten"><X /></button>
       </div>
-
-      {state === 'loading' && (
-        <div className="cameraOverlay"><RefreshCw className="spin" /><b>Livebeeld laden…</b></div>
-      )}
-
-      {state === 'error' && (
-        <div className="cameraOverlay error">
-          <Camera />
-          <b>Camera tijdelijk niet bereikbaar</b>
-          <p>De stream reageert nu niet. Probeer opnieuw zonder de pagina te verlaten.</p>
-          <button onClick={() => setReloadKey(k => k + 1)}><RefreshCw /> Opnieuw proberen</button>
+      <div className="liveCamera">
+        <video ref={videoRef} className="liveCameraVideo" playsInline autoPlay muted={muted} controls={false} aria-label={`Live verkeerscamera ${camera.name}`} />
+        <div className="cameraTopline">
+          <span className={`livePill ${state}`}><i /> {state === 'playing' ? 'LIVE' : state === 'loading' ? 'VERBINDEN' : 'NIET BESCHIKBAAR'}</span>
+          <span>{camera.id.replace('_', ' ')}</span>
         </div>
-      )}
-
-      <div className="cameraControls">
-        <button onClick={() => setMuted(value => !value)} aria-label={muted ? 'Geluid aan' : 'Geluid uit'}>
-          {muted ? <VolumeX /> : <Volume2 />}
-        </button>
-        <button onClick={fullscreen} aria-label="Volledig scherm"><Maximize2 /></button>
+        {state === 'loading' && <div className="cameraOverlay"><RefreshCw className="spin" /><b>Livebeeld laden…</b></div>}
+        {state === 'error' && <div className="cameraOverlay error"><Camera /><b>Camera tijdelijk niet bereikbaar</b><p>De stream reageert nu niet. Probeer opnieuw.</p><button onClick={() => setReloadKey(k => k + 1)}><RefreshCw /> Opnieuw proberen</button></div>}
+        <div className="cameraControls">
+          <button onClick={() => setMuted(v => !v)} aria-label={muted ? 'Geluid aan' : 'Geluid uit'}>{muted ? <VolumeX /> : <Volume2 />}</button>
+          <button onClick={fullscreen} aria-label="Volledig scherm"><Maximize2 /></button>
+        </div>
       </div>
+      <p className="cameraDataNote">De stream start pas nadat je een camera opent. Sluiten stopt het videodataverbruik direct.</p>
     </div>
   );
 }

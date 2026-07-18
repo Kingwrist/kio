@@ -1,19 +1,15 @@
-# KIO v6 — Beste route Krimpen uit
+# KIO v9
 
-Mobile-first Next.js dashboard voor Krimpen in & uit.
+- Vier camera's, pas laden na een klik.
+- GKR_03 = Grote Kruispunt – Krimpen uit.
+- GKR_04 = Grote Kruispunt – Krimpen in.
+- Testhistorie voor een normaal en zwaar filebeeld; deze standen zijn altijd duidelijk als DEMO gemarkeerd.
+- Ondersteuning voor Thunderforest Transport Map.
 
-## Nieuw in v6
-- OpenStreetMap verwijderd van het beginscherm.
-- Beste route per vervoerstype: auto en fiets.
-- Auto: Algerabrug hoofdweg, wisselstrook, Krimpen aan de Lek, Bergstoep, Lekkerkerk en Gouderak.
-- Fiets: Algerabrug fietsbrug, toegankelijke autoponten, Ouderkerk fietsveer en Stormpolder Fast Ferry.
-- Veren tonen 0 minuten wanneer geen file op de route naar het veer is gevonden.
-- Na aantikken van een veer verschijnen de vaartijden.
-- Kleurenschaal: groen 0–5, oranje 5–15, rood 15+ en grijs bij onbekende data.
-- Live cameraspeler Algerabrug blijft geïntegreerd.
+## Transport Map activeren op Vercel
 
-## Installeren
-```bash
-npm install
-npm run dev
-```
+Voeg in Vercel bij **Settings → Environment Variables** toe:
+
+`NEXT_PUBLIC_THUNDERFOREST_API_KEY=<jouw sleutel>`
+
+Zonder sleutel gebruikt KIO automatisch de standaard OpenStreetMap-laag, zodat de app niet uitvalt.
