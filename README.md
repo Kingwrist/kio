@@ -1,16 +1,13 @@
-# KIO v14 — echte NDW-verkeerslaag
+# KIO v15 — begrijpelijke NDW-verkeerslaag
 
-Deze versie haalt rechtstreeks de openbare NDW-bestanden op:
-- `measurement_current.xml.gz` voor meetlocaties en geometrie;
-- `trafficspeed.xml.gz` voor actuele snelheden;
-- `traveltime.xml.gz` voor actuele reistijden.
+Deze versie toont geen losse NDW-sensorpunten meer. De server:
 
-Alleen NDW-meetlocaties binnen het gebied rond Krimpen en de Algerabrug worden op de kaart gezet. Lijngeometrie uit NDW wordt als verkeerssegment weergegeven; puntmetingen als gekleurde meetpunten. Er worden geen handmatig getekende wegen gebruikt.
+1. haalt actuele NDW-snelheden op;
+2. negeert ongeldige nulmetingen;
+3. groepeert nabijgelegen metingen per route;
+4. gebruikt routegeometrie die op het wegennet is vastgeklikt;
+5. berekent extra reistijd ten opzichte van vrije doorstroming.
 
-Kleurindeling voor puntsnelheden:
-- groen: 40 km/u of sneller;
-- oranje: 20–40 km/u;
-- rood: lager dan 20 km/u;
-- grijs: geen actuele snelheidswaarde.
+Op de kaart staan alleen Industrieweg, C.G. Roosweg, Nieuwe Tiendweg, de hoofdrijbaan en de wisselstrook. Bij onvoldoende data blijft een weg grijs.
 
-De kaart blijft OpenStreetMap/Thunderforest Transport. Google Traffic is niet gebruikt omdat de live verkeerslaag niet vrij beschikbaar is voor hergebruik zonder Google Maps Platform en bijbehorende voorwaarden/kosten.
+De wisselstrook blijft apart en vermeldt de route-, tijd- en hoogtebeperkingen.
