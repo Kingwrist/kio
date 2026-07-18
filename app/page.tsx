@@ -1,7 +1,7 @@
 'use client';
 import dynamic from 'next/dynamic';
 import { useEffect,useMemo,useState } from 'react';
-import { ArrowLeftRight,Bike,Camera,CarFront,Clock,History,RefreshCw,Ship,TriangleAlert,X } from 'lucide-react';
+import { ArrowLeftRight,Bike,Camera,CarFront,Clock,History,LocateFixed,MapPin,Navigation,RefreshCw,Ship,TriangleAlert,X } from 'lucide-react';
 import HlsCamera, { type CameraFeed } from './HlsCamera';
 import { corridors,type Corridor,type CorridorStatus } from './corridors';
 
@@ -9,7 +9,9 @@ const MapView=dynamic(()=>import('./MapView'),{ssr:false,loading:()=><div classN
 type LiveRoute={id:string;status:CorridorStatus;delayMinutes?:number|null;message:string;details?:string[]};
 type LiveData={updatedAt:string;routes:LiveRoute[]};
 type FerryItem={id:string;status:string};
+type TrafficDelay={corridorId:string;delayMinutes:number|null};
 type ViewItem=Corridor&{status:CorridorStatus;delayMinutes:number|null;message:string;details:string[]};
+type PersonalRoute={id:string;name:string;durationMinutes:number;distanceKm:number;coordinates:[number,number][];accessNote:string;switchLane:boolean};
 
 function delayStatus(delay:number|null):CorridorStatus{if(delay===null)return'onbekend';if(delay<5)return'groen';if(delay<15)return'oranje';return'rood'}
 function formatDelay(value:number|null){return value===null?'Onbekend':value===0?'0 min':`+${value} min`}
@@ -25,8 +27,18 @@ function minutesUntil(time:string){const [h,m]=time.split(':').map(Number);const
 function switchLaneState(){const parts=new Intl.DateTimeFormat('nl-NL',{timeZone:'Europe/Amsterdam',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());const h=Number(parts.find(p=>p.type==='hour')?.value??0);const m=Number(parts.find(p=>p.type==='minute')?.value??0);const minutes=h*60+m;const open=minutes>=20*60||minutes<14*60;return open?{open:true,label:'Open richting Krimpen uit',next:'Sluit om 14:00'}:{open:false,label:'Gesloten richting Krimpen uit',next:'Opent om 20:00'}}
 
 export default function Home(){
- const [live,setLive]=useState<LiveData|null>(null),[ferries,setFerries]=useState<FerryItem[]>([]),[selected,setSelected]=useState<ViewItem|null>(null),[loading,setLoading]=useState(false),[activeCamera,setActiveCamera]=useState<CameraFeed|null>(null),[historyMode,setHistoryMode]=useState<'live'|'file15'|'file45'>('live');
- async function load(){setLoading(true);try{const [a,b]=await Promise.all([fetch('/api/live',{cache:'no-store'}),fetch('/api/status',{cache:'no-store'})]);setLive(await a.json());setFerries((await b.json()).ferries??[])}finally{setLoading(false)}}
+ const [live,setLive]=useState<LiveData|null>(null),[ferries,setFerries]=useState<FerryItem[]>([]),[trafficDelays,setTrafficDelays]=useState<TrafficDelay[]>([]),[selected,setSelected]=useState<ViewItem|null>(null),[loading,setLoading]=useState(false),[activeCamera,setActiveCamera]=useState<CameraFeed|null>(null),[historyMode,setHistoryMode]=useState<'live'|'file15'|'file45'>('live');
+ const [vehicleHeight,setVehicleHeight]=useState<'low'|'high'|'unknown'>('unknown');
+ const [locating,setLocating]=useState(false),[locationError,setLocationError]=useState(''),[personalRoutes,setPersonalRoutes]=useState<PersonalRoute[]>([]),[origin,setOrigin]=useState<[number,number]|null>(null);
+ async function useMyLocation(){
+  setLocationError(''); setLocating(true);
+  if(!navigator.geolocation){setLocationError('Locatie wordt niet ondersteund door deze browser.');setLocating(false);return}
+  navigator.geolocation.getCurrentPosition(async position=>{
+   const coords:[number,number]=[position.coords.latitude,position.coords.longitude];setOrigin(coords);
+   try{const response=await fetch(`/api/personal-routes?lat=${coords[0]}&lon=${coords[1]}&height=${vehicleHeight}`,{cache:'no-store'});const data=await response.json();if(!response.ok)throw new Error(data.error||'Routeberekening mislukt');setPersonalRoutes(data.routes||[])}catch(error){setLocationError(error instanceof Error?error.message:'Routeberekening mislukt')}finally{setLocating(false)}
+  },error=>{setLocationError(error.code===1?'Locatietoegang is geweigerd.':'Je locatie kon niet worden bepaald.');setLocating(false)},{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+ }
+ async function load(){setLoading(true);try{const [a,b,c]=await Promise.all([fetch('/api/live',{cache:'no-store'}),fetch('/api/status',{cache:'no-store'}),fetch('/api/ndw-traffic',{cache:'no-store'})]);setLive(await a.json());setFerries((await b.json()).ferries??[]);setTrafficDelays((await c.json()).segments??[])}finally{setLoading(false)}}
  useEffect(()=>{load();const t=setInterval(load,60000);return()=>clearInterval(t)},[]);
  const items=useMemo<ViewItem[]>(()=>corridors.map(c=>{
   const m=live?.routes?.find(r=>r.id===c.id);
@@ -49,6 +61,15 @@ export default function Home(){
  return <main>
   <header className="topbar"><div><span className="brand">KIO</span><h1>Krimpen in & uit</h1><p>Live overzicht van brug en veren</p></div><button onClick={load} aria-label="Vernieuwen"><RefreshCw className={loading?'spin':''}/></button></header>
   <section className="update"><span className="pulse"/> Bijgewerkt {updated}</section>
+
+  <section className="personalRouteSection"><div className="sectionHead"><div><span className="kicker">VANAF JOUW LOCATIE</span><h2>Hoe snel ben je Krimpen uit?</h2></div><Navigation/></div>
+   <p className="personalIntro">KIO gebruikt je locatie alleen voor deze berekening en slaat die niet op. De wisselstrook wordt alleen meegenomen wanneer hij open is en je auto maximaal 1,80 m hoog is.</p>
+   <div className="heightChoice"><span>Autohoogte</span><button className={vehicleHeight==='low'?'active':''} onClick={()=>setVehicleHeight('low')}>Tot 1,80 m</button><button className={vehicleHeight==='high'?'active':''} onClick={()=>setVehicleHeight('high')}>Hoger</button><button className={vehicleHeight==='unknown'?'active':''} onClick={()=>setVehicleHeight('unknown')}>Onbekend</button></div>
+   <button className="locateButton" onClick={useMyLocation} disabled={locating}><LocateFixed className={locating?'spin':''}/>{locating?'Route berekenen…':'Gebruik mijn locatie'}</button>
+   {locationError&&<p className="locationError">{locationError}</p>}
+   {personalRoutes.length>0&&<div className="personalRoutes">{personalRoutes.map((route,index)=>{const corridorId=route.id==='industrieweg'?'algera-industrieweg':route.id==='cg-roosweg'?'algera-cg-roosweg':route.id==='nieuwe-tiendweg'?'algera-nieuwe-tiendweg':'algera-lane';const extra=trafficDelays.find(item=>item.corridorId===corridorId)?.delayMinutes??0;const total=route.durationMinutes+extra;return <article key={route.id} className={index===0?'best':''}><div className="routeRank">{index+1}</div><div><b>{route.name}</b><small>{route.distanceKm} km · basis {route.durationMinutes} min{extra>0?` · verkeer +${extra} min`:''}</small><em>{route.accessNote}</em></div><strong>{total} min</strong></article>})}</div>}
+   {origin&&<div className="privacyNote"><MapPin/> Locatie gebruikt voor deze sessie; niet opgeslagen.</div>}
+  </section>
 
   <section className="mapSection"><div className="sectionHead"><div><span className="kicker">LIVE KAART</span><h2>Kies een overgang</h2></div><span className="legend"><i className="green"/> 0–5 <i className="orange"/> 5–15 <i className="red"/> 15+</span></div>
    <p className="mapIntro">De verkeerslaag bundelt de ruwe NDW-metingen per echte route. Je ziet alleen de wegen: groen is normale doorstroming, oranje merkbare vertraging, rood zware vertraging en grijs betekent onvoldoende betrouwbare data. Tik op een weg voor de berekende extra reistijd.</p><div className="historyControls"><button className={historyMode==='live'?'active':''} onClick={()=>setHistoryMode('live')}><RefreshCw/> Live</button><button className={historyMode==='file15'?'active':''} onClick={()=>setHistoryMode('file15')}><History/> Filevoorbeeld</button><button className={historyMode==='file45'?'active':''} onClick={()=>setHistoryMode('file45')}><History/> Zware file</button></div>{historyMode!=='live'&&<div className="demoBanner">DEMO · geen actuele verkeersdata</div>}
