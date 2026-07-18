@@ -1,6 +1,6 @@
 {
   "name": "krimpen-in-out",
-  "version": "9.0.0",
+  "version": "10.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -1,15 +1,10 @@
-# KIO v9
+# KIO v10
 
-- Vier camera's, pas laden na een klik.
-- GKR_03 = Grote Kruispunt – Krimpen uit.
-- GKR_04 = Grote Kruispunt – Krimpen in.
-- Testhistorie voor een normaal en zwaar filebeeld; deze standen zijn altijd duidelijk als DEMO gemarkeerd.
-- Ondersteuning voor Thunderforest Transport Map.
+Kleine uitbreiding voor de Algerabrug, richting Krimpen uit.
 
-## Transport Map activeren op Vercel
+In het detailvenster van de Algerabrug staan nu drie afzonderlijke aanvoerwegen:
+- Industrieweg
+- C.G. Roosweg
+- Nieuwe Tiendweg
 
-Voeg in Vercel bij **Settings → Environment Variables** toe:
-
-`NEXT_PUBLIC_THUNDERFOREST_API_KEY=<jouw sleutel>`
-
-Zonder sleutel gebruikt KIO automatisch de standaard OpenStreetMap-laag, zodat de app niet uitvalt.
+De file-demo geeft iedere aanvoerweg een eigen vertraging. In live-modus staat de datastructuur klaar, maar de exacte NDW-meetvak-ID’s moeten nog per weg worden vastgesteld. Camera’s blijven lazy-loaden.

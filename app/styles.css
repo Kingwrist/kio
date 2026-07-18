@@ -16,3 +16,8 @@
 
 /* KIO v9: transportkaart en veilige testhistorie */
 .historyControls{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}.historyControls button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 12px;display:flex;align-items:center;gap:7px;font-weight:800;font-size:12px;color:var(--muted);cursor:pointer}.historyControls button svg{width:15px;height:15px}.historyControls button.active{background:var(--ink);color:#fff;border-color:var(--ink)}.demoBanner{margin:0 0 12px;padding:9px 12px;border-radius:12px;background:#fff2d9;color:#8b5200;font-size:12px;font-weight:900;letter-spacing:.04em;text-align:center}.cameraChoices{grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:760px){.cameraChoices{grid-template-columns:1fr}}
+
+
+.approachBlock{margin-top:18px;padding-top:18px;border-top:1px solid rgba(23,48,39,.12)}
+.approachHead small{font-weight:800;letter-spacing:.09em;color:#61716b}.approachHead h3{margin:5px 0 4px;font-size:1.05rem}.approachHead p{margin:0 0 12px;color:#64716c;font-size:.88rem;line-height:1.45}
+.approachList{display:grid;gap:8px}.approachList button{width:100%;border:1px solid rgba(23,48,39,.11);background:#f7faf8;border-radius:14px;padding:12px;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;text-align:left;color:inherit}.approachList button div{display:grid;gap:3px}.approachList button b{font-size:.94rem}.approachList button small{color:#71807a;line-height:1.25}.approachList button strong{font-size:.9rem;white-space:nowrap}

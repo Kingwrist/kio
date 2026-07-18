@@ -29,8 +29,8 @@ export default function Home(){
  useEffect(()=>{load();const t=setInterval(load,60000);return()=>clearInterval(t)},[]);
  const items=useMemo<ViewItem[]>(()=>corridors.map(c=>{
   const m=live?.routes?.find(r=>r.id===c.id);
-  const demo15:Record<string,number>={'algera-main':18,'algera-lane':9,'algera-bike':2,'krimpen-lek':4,'lekkerkerk':7,'gouderak':3,'bergstoep':1,'ouderkerk':0,'storm-fast':5,'storm-taxi':0};
-  const demo45:Record<string,number>={'algera-main':27,'algera-lane':16,'algera-bike':4,'krimpen-lek':11,'lekkerkerk':14,'gouderak':8,'bergstoep':3,'ouderkerk':0,'storm-fast':9,'storm-taxi':0};
+  const demo15:Record<string,number>={'algera-main':18,'algera-lane':9,'algera-bike':2,'algera-industrieweg':12,'algera-cg-roosweg':18,'algera-nieuwe-tiendweg':7,'krimpen-lek':4,'lekkerkerk':7,'gouderak':3,'bergstoep':1,'ouderkerk':0,'storm-fast':5,'storm-taxi':0};
+  const demo45:Record<string,number>={'algera-main':27,'algera-lane':16,'algera-bike':4,'algera-industrieweg':21,'algera-cg-roosweg':27,'algera-nieuwe-tiendweg':15,'krimpen-lek':11,'lekkerkerk':14,'gouderak':8,'bergstoep':3,'ouderkerk':0,'storm-fast':9,'storm-taxi':0};
   const demo=historyMode==='file15'?demo15:historyMode==='file45'?demo45:null;
   const delay=demo?.[c.id]??(c.kind==='veer'?(m?.delayMinutes??0):(m?.delayMinutes??null));
   let status=delayStatus(delay);
@@ -41,7 +41,8 @@ export default function Home(){
   return{...c,status,delayMinutes:delay,message:demo?`Historische testweergave: ${delay} minuten vertraging.`:(m?.message??(c.kind==='veer'?'Geen file gevonden op de route naar het veer':'Geen betrouwbare live schatting')),details:m?.details??[]};
  }),[live,ferries,historyMode]);
  const updated=live?.updatedAt?new Date(live.updatedAt).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'—';
- const algera=items.filter(i=>i.id.startsWith('algera'));
+ const algera=items.filter(i=>['algera-main','algera-lane','algera-bike'].includes(i.id));
+ const algeraApproaches=items.filter(i=>['algera-industrieweg','algera-cg-roosweg','algera-nieuwe-tiendweg'].includes(i.id));
  const selectedDepartures=selected?nextDepartures(selected):[];
  return <main>
   <header className="topbar"><div><span className="brand">KIO</span><h1>Krimpen in & uit</h1><p>Live overzicht van brug en veren</p></div><button onClick={load} aria-label="Vernieuwen"><RefreshCw className={loading?'spin':''}/></button></header>
@@ -74,7 +75,10 @@ export default function Home(){
    {selected.kind==='weg'?<>
     <div className="totalTime"><small>Actuele verkeersvertraging</small><strong>{formatDelay(selected.delayMinutes)}</strong></div>
     <div className="situation"><b>Live verkeersinformatie</b><p>{selected.message}</p></div>
-    {selected.id.startsWith('algera')&&<div className="miniStatusGrid">{algera.map(a=><button key={a.id} onClick={()=>setSelected(a)}><span className={`statusDot ${a.status}`}/><small>{a.subtitle}</small><b>{formatDelay(a.delayMinutes)}</b></button>)}</div>}
+    {selected.id.startsWith('algera')&&<>
+      <div className="miniStatusGrid">{algera.map(a=><button key={a.id} onClick={()=>setSelected(a)}><span className={`statusDot ${a.status}`}/><small>{a.subtitle}</small><b>{formatDelay(a.delayMinutes)}</b></button>)}</div>
+      <div className="approachBlock"><div className="approachHead"><small>KRIMPEN UIT · AANVOER NAAR HOOFDRIJBAAN</small><h3>Drie aanvoerwegen</h3><p>Hiermee controleren we afzonderlijk waar de vertraging richting de Algerabrug ontstaat.</p></div><div className="approachList">{algeraApproaches.map(a=><button key={a.id} onClick={()=>setSelected(a)}><span className={`statusDot ${a.status}`}/><div><b>{a.name}</b><small>{a.message}</small></div><strong>{formatDelay(a.delayMinutes)}</strong></button>)}</div></div>
+    </>}
    </>:<>
     <div className="nextDeparture">
      <span><Clock/> Eerstvolgende vaart</span>

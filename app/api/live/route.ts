@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const ALL_IDS = ['algera-main','algera-lane','algera-bike','krimpen-lek','storm-fast','storm-taxi','lekkerkerk','ouderkerk','bergstoep','gouderak'];
+const ALL_IDS = ['algera-main','algera-lane','algera-bike','algera-industrieweg','algera-cg-roosweg','algera-nieuwe-tiendweg','krimpen-lek','storm-fast','storm-taxi','lekkerkerk','ouderkerk','bergstoep','gouderak'];
 const situationsUrl = 'https://opendata.ndw.nu/actueel_beeld.xml.gz';
 const bridgesUrl = 'https://opendata.ndw.nu/planningsfeed_brugopeningen.xml.gz';
 
@@ -46,14 +46,14 @@ export async function GET() {
     const activeOpening = times.some((time) => Math.abs(time-now) < 15*60*1000) && /bridge open|brug open|road closed|unavailable for road traffic/i.test(joined);
 
     const routes = unknown('Nog geen exact NDW-reistijdvak gekoppeld');
-    for (const id of ['algera-main','algera-lane']) {
+    for (const id of ['algera-main','algera-lane','algera-industrieweg','algera-cg-roosweg','algera-nieuwe-tiendweg']) {
       const route = routes.find((item) => item.id === id)!;
       if (activeOpening) {
         route.status = 'rood'; route.delayMinutes = 18; route.message = 'Brugopening rond het huidige tijdstip gevonden'; route.details = bridgeParts.slice(0,2).map(clean);
       } else if (incidentParts.length) {
         route.status = 'oranje'; route.delayMinutes = 7; route.message = 'Actuele NDW-verkeersmelding bij de Algerabrug'; route.details = incidentParts.slice(0,2).map(clean);
       } else {
-        route.status = 'groen'; route.delayMinutes = 0; route.message = 'NDW gecontroleerd: geen actieve brugopening of lokale verkeersmelding gevonden';
+        route.status = 'groen'; route.delayMinutes = 0; route.message = id.startsWith('algera-') && !['algera-main','algera-lane'].includes(id) ? 'Aanvoerroute is aangemaakt; exact NDW-meetvak wordt nog gekoppeld' : 'NDW gecontroleerd: geen actieve brugopening of lokale verkeersmelding gevonden';
       }
     }
     const bike = routes.find((item) => item.id === 'algera-bike')!;
