@@ -1,9 +1,8 @@
 'use client';
 import { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Tooltip, ZoomControl, useMap, Polyline, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Tooltip, ZoomControl, useMap } from 'react-leaflet';
 import { DivIcon } from 'leaflet';
 import type { Corridor, CorridorStatus } from './corridors';
-import { trafficSegments } from './corridors';
 
 type LiveCorridor=Corridor&{status:CorridorStatus;delayMinutes:number|null;message:string;details:string[]};
 const colors:Record<CorridorStatus,string>={groen:'#16a565',oranje:'#ef8d24',rood:'#dc3f43',onbekend:'#8f9b95'};
@@ -38,14 +37,8 @@ export default function MapView({items,selected,onSelect}:{items:LiveCorridor[];
  return <MapContainer center={[51.932,4.650]} zoom={11} minZoom={10} maxZoom={18} zoomControl={false} className="osmMap">
   <ZoomControl position="bottomright"/><Focus item={selected}/>
   <TileLayer attribution={attribution} url={tileUrl}/>
-  {trafficSegments.map(segment=>{
-    const item=items.find(i=>i.id===segment.corridorId);
-    if(!item)return null;
-    const isSelected=selected?.id===item.id;
-    return <Polyline key={segment.id} positions={segment.path} pathOptions={{color:colors[item.status],weight:isSelected?9:6,opacity:.9,lineCap:'round',lineJoin:'round'}} eventHandlers={{click:()=>onSelect(item)}}>
-      <Popup><div className="trafficPopup"><strong>{segment.name}</strong><span>{segment.direction}</span><b>{item.delayMinutes===null?'Geen betrouwbare live meting':item.delayMinutes===0?'0 min vertraging':`+${item.delayMinutes} min vertraging`}</b>{segment.accessNote&&<small>{segment.accessNote}</small>}{segment.heightLimitMeters&&<small>Maximale voertuighoogte: {segment.heightLimitMeters.toFixed(2).replace('.',',')} m</small>}</div></Popup>
-    </Polyline>;
-  })}
+  {/* Verkeerslijnen tijdelijk verborgen: geen handmatig getekende geometrie tonen.
+      Ze komen terug zodra echte OSM/NDW-segmentgeometrie is gekoppeld. */}
   <Marker position={[51.9168,4.58032]} icon={algeraIcon(algera)} eventHandlers={{click:()=>onSelect(algera.find(i=>i.id==='algera-main')!)}}>
    <Tooltip direction="top" offset={[0,-28]}><strong>Algerabrug</strong><br/>Tik voor live info</Tooltip>
   </Marker>
