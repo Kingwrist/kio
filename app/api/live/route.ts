@@ -49,17 +49,17 @@ export async function GET() {
     for (const id of ['algera-main','algera-lane','algera-industrieweg','algera-cg-roosweg','algera-nieuwe-tiendweg']) {
       const route = routes.find((item) => item.id === id)!;
       if (activeOpening) {
-        route.status = 'rood'; route.delayMinutes = 18; route.message = 'Brugopening rond het huidige tijdstip gevonden'; route.details = bridgeParts.slice(0,2).map(clean);
+        route.status = 'rood'; route.delayMinutes = null; route.message = 'Brugopening rond het huidige tijdstip gevonden; exacte vertraging is niet gemeten'; route.details = bridgeParts.slice(0,2).map(clean);
       } else if (incidentParts.length) {
-        route.status = 'oranje'; route.delayMinutes = 7; route.message = 'Actuele NDW-verkeersmelding bij de Algerabrug'; route.details = incidentParts.slice(0,2).map(clean);
+        route.status = 'oranje'; route.delayMinutes = null; route.message = 'Actuele NDW-verkeersmelding bij de Algerabrug; exacte vertraging is niet gemeten'; route.details = incidentParts.slice(0,2).map(clean);
       } else {
-        route.status = 'groen'; route.delayMinutes = 0; route.message = id.startsWith('algera-') && !['algera-main','algera-lane'].includes(id) ? 'Aanvoerroute is aangemaakt; exact NDW-meetvak wordt nog gekoppeld' : 'NDW gecontroleerd: geen actieve brugopening of lokale verkeersmelding gevonden';
+        route.status = 'onbekend'; route.delayMinutes = null; route.message = 'Verkeerslaag staat klaar; exact NDW-meetvak en rijrichting moeten nog aan dit segment worden gekoppeld';
       }
     }
     const bike = routes.find((item) => item.id === 'algera-bike')!;
-    bike.status = activeOpening ? 'oranje' : 'groen';
-    bike.delayMinutes = activeOpening ? 4 : 0;
-    bike.message = activeOpening ? 'Fietsroute kan rond de brugopening kort hinder hebben' : 'Geen actuele hinder voor de fietsbrug gevonden';
+    bike.status = activeOpening ? 'oranje' : 'onbekend';
+    bike.delayMinutes = null;
+    bike.message = activeOpening ? 'Fietsroute kan rond de brugopening hinder hebben; exacte vertraging is niet gemeten' : 'Nog geen betrouwbare live fietsmeting gekoppeld';
 
     return NextResponse.json({ updatedAt: new Date().toISOString(), routes, source: 'NDW Open Data' });
   } catch (error) {

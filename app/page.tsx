@@ -1,7 +1,7 @@
 'use client';
 import dynamic from 'next/dynamic';
 import { useEffect,useMemo,useState } from 'react';
-import { ArrowLeftRight,Bike,Camera,CarFront,Clock,History,RefreshCw,Ship,X } from 'lucide-react';
+import { ArrowLeftRight,Bike,Camera,CarFront,Clock,History,RefreshCw,Ship,TriangleAlert,X } from 'lucide-react';
 import HlsCamera, { type CameraFeed } from './HlsCamera';
 import { corridors,type Corridor,type CorridorStatus } from './corridors';
 
@@ -22,6 +22,7 @@ function nextDepartures(item:Corridor){
  return Array.from({length:4},(_,i)=>{const d=new Date(next);d.setMinutes(d.getMinutes()+i*step);return d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})});
 }
 function minutesUntil(time:string){const [h,m]=time.split(':').map(Number);const now=new Date();const d=new Date(now);d.setHours(h,m,0,0);if(d<now)d.setDate(d.getDate()+1);return Math.max(0,Math.round((d.getTime()-now.getTime())/60000))}
+function switchLaneState(){const parts=new Intl.DateTimeFormat('nl-NL',{timeZone:'Europe/Amsterdam',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());const h=Number(parts.find(p=>p.type==='hour')?.value??0);const m=Number(parts.find(p=>p.type==='minute')?.value??0);const minutes=h*60+m;const open=minutes>=20*60||minutes<14*60;return open?{open:true,label:'Open richting Krimpen uit',next:'Sluit om 14:00'}:{open:false,label:'Gesloten richting Krimpen uit',next:'Opent om 20:00'}}
 
 export default function Home(){
  const [live,setLive]=useState<LiveData|null>(null),[ferries,setFerries]=useState<FerryItem[]>([]),[selected,setSelected]=useState<ViewItem|null>(null),[loading,setLoading]=useState(false),[activeCamera,setActiveCamera]=useState<CameraFeed|null>(null),[historyMode,setHistoryMode]=useState<'live'|'file15'|'file45'>('live');
@@ -44,12 +45,13 @@ export default function Home(){
  const algera=items.filter(i=>['algera-main','algera-lane','algera-bike'].includes(i.id));
  const algeraApproaches=items.filter(i=>['algera-industrieweg','algera-cg-roosweg','algera-nieuwe-tiendweg'].includes(i.id));
  const selectedDepartures=selected?nextDepartures(selected):[];
+ const laneState=switchLaneState();
  return <main>
   <header className="topbar"><div><span className="brand">KIO</span><h1>Krimpen in & uit</h1><p>Live overzicht van brug en veren</p></div><button onClick={load} aria-label="Vernieuwen"><RefreshCw className={loading?'spin':''}/></button></header>
   <section className="update"><span className="pulse"/> Bijgewerkt {updated}</section>
 
   <section className="mapSection"><div className="sectionHead"><div><span className="kicker">LIVE KAART</span><h2>Kies een overgang</h2></div><span className="legend"><i className="green"/> 0–5 <i className="orange"/> 5–15 <i className="red"/> 15+</span></div>
-   <p className="mapIntro">Tik op een bol. In iedere bol staat de verkeersvertraging in minuten. Gebruik de testhistorie om te controleren hoe een filebeeld eruitziet.</p><div className="historyControls"><button className={historyMode==='live'?'active':''} onClick={()=>setHistoryMode('live')}><RefreshCw/> Live</button><button className={historyMode==='file15'?'active':''} onClick={()=>setHistoryMode('file15')}><History/> Filevoorbeeld</button><button className={historyMode==='file45'?'active':''} onClick={()=>setHistoryMode('file45')}><History/> Zware file</button></div>{historyMode!=='live'&&<div className="demoBanner">DEMO · geen actuele verkeersdata</div>}
+   <p className="mapIntro">De gekleurde verkeerslagen tonen de drie aanvoerwegen, de hoofdrijbaan en de wisselstrook. Grijs betekent dat nog geen betrouwbare live NDW-meting aan het segment is gekoppeld.</p><div className="historyControls"><button className={historyMode==='live'?'active':''} onClick={()=>setHistoryMode('live')}><RefreshCw/> Live</button><button className={historyMode==='file15'?'active':''} onClick={()=>setHistoryMode('file15')}><History/> Filevoorbeeld</button><button className={historyMode==='file45'?'active':''} onClick={()=>setHistoryMode('file45')}><History/> Zware file</button></div>{historyMode!=='live'&&<div className="demoBanner">DEMO · geen actuele verkeersdata</div>}
    <MapView items={items} selected={selected} onSelect={setSelected}/>
   </section>
 
@@ -75,9 +77,10 @@ export default function Home(){
    {selected.kind==='weg'?<>
     <div className="totalTime"><small>Actuele verkeersvertraging</small><strong>{formatDelay(selected.delayMinutes)}</strong></div>
     <div className="situation"><b>Live verkeersinformatie</b><p>{selected.message}</p></div>
+    {selected.id==='algera-lane'&&<div className={`laneRules ${laneState.open?'open':'closed'}`}><div><ArrowLeftRight/><span><b>{laneState.label}</b><small>{laneState.next}</small></span></div><p><TriangleAlert/> Alleen bereikbaar via de Nieuwe Tiendweg · niet via C.G. Roosweg of Industrieweg · maximale voertuighoogte 1,80 m.</p></div>}
     {selected.id.startsWith('algera')&&<>
       <div className="miniStatusGrid">{algera.map(a=><button key={a.id} onClick={()=>setSelected(a)}><span className={`statusDot ${a.status}`}/><small>{a.subtitle}</small><b>{formatDelay(a.delayMinutes)}</b></button>)}</div>
-      <div className="approachBlock"><div className="approachHead"><small>KRIMPEN UIT · AANVOER NAAR HOOFDRIJBAAN</small><h3>Drie aanvoerwegen</h3><p>Hiermee controleren we afzonderlijk waar de vertraging richting de Algerabrug ontstaat.</p></div><div className="approachList">{algeraApproaches.map(a=><button key={a.id} onClick={()=>setSelected(a)}><span className={`statusDot ${a.status}`}/><div><b>{a.name}</b><small>{a.message}</small></div><strong>{formatDelay(a.delayMinutes)}</strong></button>)}</div></div>
+      <div className="approachBlock"><div className="approachHead"><small>KRIMPEN UIT · LIVE VERKEERSLAGEN</small><h3>Drie aanvoerwegen</h3><p>Industrieweg en C.G. Roosweg voeren alleen naar de hoofdrijbaan. De Nieuwe Tiendweg voert naar de hoofdrijbaan én de wisselstrook.</p></div><div className="approachList">{algeraApproaches.map(a=><button key={a.id} onClick={()=>setSelected(a)}><span className={`statusDot ${a.status}`}/><div><b>{a.name}</b><small>{a.message}</small></div><strong>{formatDelay(a.delayMinutes)}</strong></button>)}</div></div>
     </>}
    </>:<>
     <div className="nextDeparture">

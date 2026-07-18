@@ -6,6 +6,47 @@ export type Corridor = {
   point:[number,number]; schedule?:ScheduleRow[]; scheduleNote?:string;
   frequencyMinutes?:number;
 };
+
+export type TrafficSegment = {
+  id:string;
+  corridorId:string;
+  name:string;
+  direction:string;
+  path:[number,number][];
+  accessNote?:string;
+  heightLimitMeters?:number;
+  switchLane?:boolean;
+};
+
+export const trafficSegments: TrafficSegment[] = [
+  {
+    id:'segment-industrieweg', corridorId:'algera-industrieweg', name:'Industrieweg', direction:'Krimpen uit → hoofdrijbaan',
+    path:[[51.9094,4.6064],[51.9111,4.6056],[51.9132,4.6048],[51.9150,4.6036],[51.9164,4.6022],[51.9170,4.6008]],
+    accessNote:'Alleen naar de hoofdrijbaan; geen toegang tot de wisselstrook.'
+  },
+  {
+    id:'segment-cg-roosweg', corridorId:'algera-cg-roosweg', name:'C.G. Roosweg', direction:'Krimpen uit → hoofdrijbaan',
+    path:[[51.9251,4.6110],[51.9231,4.6097],[51.9208,4.6074],[51.9189,4.6048],[51.9177,4.6022],[51.9170,4.6008]],
+    accessNote:'Alleen naar de hoofdrijbaan; geen toegang tot de wisselstrook.'
+  },
+  {
+    id:'segment-nieuwe-tiendweg', corridorId:'algera-nieuwe-tiendweg', name:'Nieuwe Tiendweg', direction:'Krimpen uit → hoofdrijbaan',
+    path:[[51.9280,4.6258],[51.9268,4.6220],[51.9254,4.6186],[51.9238,4.6145],[51.9217,4.6102],[51.9195,4.6062],[51.9178,4.6024],[51.9170,4.6008]],
+    accessNote:'Aanvoer voor zowel de hoofdrijbaan als de wisselstrook.'
+  },
+  {
+    id:'segment-hoofdrijbaan', corridorId:'algera-main', name:'Algerabrug hoofdrijbaan', direction:'Krimpen uit → Capelle',
+    path:[[51.9170,4.6008],[51.9168,4.5986],[51.9165,4.5960],[51.9160,4.5933]],
+  },
+  {
+    id:'segment-wisselstrook', corridorId:'algera-lane', name:'Wisselstrook', direction:'Krimpen uit',
+    path:[[51.9211,4.6092],[51.9194,4.6058],[51.9179,4.6022],[51.9172,4.6005],[51.9168,4.5982],[51.9165,4.5956]],
+    accessNote:'Alleen bereikbaar via de Nieuwe Tiendweg. Niet via C.G. Roosweg of Industrieweg.',
+    heightLimitMeters:1.8,
+    switchLane:true,
+  },
+];
+
 export const corridors: Corridor[] = [
  {id:'algera-main',name:'Algerabrug',subtitle:'Hoofdweg auto',mode:'auto',kind:'weg',point:[51.9170,4.6008]},
  {id:'algera-lane',name:'Algerabrug',subtitle:'Wisselstrook',mode:'auto',kind:'weg',point:[51.9175,4.6003]},
