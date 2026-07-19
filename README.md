@@ -1,17 +1,19 @@
-# KIO v1
+# KIO v17 – NDW meetvakken en wisselstrook
 
-Werkende Next.js-prototype met:
-- echte NDW-meetvakgeometrieën uit de aangeleverde shapefile;
-- drie verkeerskleuren;
-- aparte wisselstrookstatus;
-- Algerabrug en aanrijroute pont;
-- automatische verversing iedere minuut.
+Gebouwd op KIO v16. De bestaande persoonlijke reistijd, ponten, camera’s en routekeuze zijn behouden.
 
-## Installeren
-1. Kopieer deze bestanden over de bestaande repository.
-2. `npm install`
-3. `npm run dev`
-4. Commit en push naar GitHub; Vercel bouwt automatisch.
+## Nieuw in v17
 
-## Belangrijk
-`app/api/traffic/route.ts` draait nu in zichtbare demomodus. De geometrie is echt; de snelheden en wisselstrookrichting zijn nog demo. Koppel daar later de officiële live bronnen.
+- Officiële NDW-meetvakgeometrieën uit de aangeleverde shapefile.
+- Alleen de bruikbare wegdelen rond de Algerabrug en de N210-aanrijroute naar de pont.
+- Drie eenvoudige kleuren: groen (vrij), oranje (druk), rood (vertraging).
+- Grijs wanneer geen betrouwbare actuele NDW-meting beschikbaar is.
+- Wisselstrook als aparte gestreepte lijn, met open/gesloten status en toegangsregels.
+- Minder technische informatie in de pop-up; alleen status, snelheid, lengte en bron.
+- Alle functies uit v16 blijven aanwezig.
+
+## Release
+
+- Buildnaam: `KIO v17 – NDW meetvakken en wisselstrook`
+- Commit: `KIO v17 NDW meetvakken en wisselstrook`
+- Tag: `v17`
