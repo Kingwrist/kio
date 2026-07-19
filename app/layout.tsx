@@ -1,14 +1,12 @@
-import type { Metadata, Viewport } from 'next';
+import type { Metadata } from 'next';
 import 'leaflet/dist/leaflet.css';
 import './styles.css';
 
 export const metadata: Metadata = {
-  title: 'Krimpen In & Out',
-  description: 'Verkeer, veren en camera’s rond Krimpen',
-  manifest: '/manifest.webmanifest',
+  title: 'KIO — Krimpen In & Out',
+  description: 'In één oogopslag de Algerabrug, wisselstrook en pontroute.'
 };
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#07111f' };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({children}:{children:React.ReactNode}) {
   return <html lang="nl"><body>{children}</body></html>;
 }

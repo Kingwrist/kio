@@ -1,9 +1,17 @@
-# KIO v16 – Persoonlijke reistijd
+# KIO v1
 
-GitHub buildnaam: **KIO v16 – Persoonlijke reistijd vanaf huidige locatie**
+Werkende Next.js-prototype met:
+- echte NDW-meetvakgeometrieën uit de aangeleverde shapefile;
+- drie verkeerskleuren;
+- aparte wisselstrookstatus;
+- Algerabrug en aanrijroute pont;
+- automatische verversing iedere minuut.
 
-Release: `v16`
-Commit: `KIO v16 persoonlijke reistijd vanaf huidige locatie`
-Tag: `v16`
+## Installeren
+1. Kopieer deze bestanden over de bestaande repository.
+2. `npm install`
+3. `npm run dev`
+4. Commit en push naar GitHub; Vercel bouwt automatisch.
 
-Nieuw: GPS op verzoek, voertuig-hoogtekeuze, vier route-opties richting Algerabrug en databesparende locatieberekening. De browserlocatie wordt niet opgeslagen.
+## Belangrijk
+`app/api/traffic/route.ts` draait nu in zichtbare demomodus. De geometrie is echt; de snelheden en wisselstrookrichting zijn nog demo. Koppel daar later de officiële live bronnen.

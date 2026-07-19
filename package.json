@@ -1,28 +1,16 @@
 {
-  "name": "krimpen-in-out",
-  "version": "16.0.0",
+  "name": "kio-v1",
+  "version": "1.0.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  },
+  "scripts": {"dev":"next dev","build":"next build","start":"next start"},
   "dependencies": {
-    "@types/leaflet": "^1.9.16",
-    "hls.js": "^1.6.13",
-    "leaflet": "^1.9.4",
-    "lucide-react": "^0.468.0",
-    "next": "15.5.18",
-    "react": "19.0.6",
-    "react-dom": "19.0.6",
-    "react-leaflet": "^5.0.0"
+    "@types/leaflet":"^1.9.16",
+    "leaflet":"^1.9.4",
+    "lucide-react":"^0.468.0",
+    "next":"15.5.18",
+    "react":"19.0.6",
+    "react-dom":"19.0.6",
+    "react-leaflet":"^5.0.0"
   },
-  "devDependencies": {
-    "@types/node": "^22.10.2",
-    "@types/react": "^19.0.2",
-    "typescript": "^5.7.2"
-  },
-  "engines": {
-    "node": ">=20.x"
-  }
+  "devDependencies":{"@types/node":"^22.10.2","@types/react":"^19.0.2","typescript":"^5.7.2"}
 }
