@@ -23,8 +23,11 @@ type TomTomSummary = {
   noTrafficTravelTimeInSeconds?: number;
 };
 
-let refreshPromise: Promise<CacheRow[]> | null = null;
+type RefreshResult = { rows: CacheRow[]; errors: string[] };
+
+let refreshPromise: Promise<RefreshResult> | null = null;
 let memoryCache: CacheRow[] = [];
+
 
 function minutes(seconds?: number) {
   return typeof seconds === 'number' ? Math.max(0, Math.round(seconds / 60)) : null;
@@ -102,14 +105,17 @@ async function fetchRoute(route: (typeof ROUTES)[number]): Promise<CacheRow> {
   };
 }
 
-async function refreshAll() {
+async function refreshAll(): Promise<RefreshResult> {
   const settled = await Promise.allSettled(ROUTES.map(fetchRoute));
   const previous = await readCache().catch(() => memoryCache);
   const previousById = new Map(previous.map((row) => [row.route_id, row]));
+  const errors: string[] = [];
 
   const rows = settled.map((result, index): CacheRow => {
     if (result.status === 'fulfilled') return result.value;
     const route = ROUTES[index];
+    const message = result.reason instanceof Error ? result.reason.message : String(result.reason);
+    errors.push(`${route.name}: ${message}`);
     const old = previousById.get(route.id);
     return old || {
       route_id: route.id,
@@ -124,7 +130,31 @@ async function refreshAll() {
   });
 
   await writeCache(rows);
-  return rows;
+  return { rows, errors };
+}
+
+function toPayload(rows: CacheRow[], source: 'cache' | 'tomtom' | 'admin', errors: string[] = []) {
+  const sorted = ROUTES.map((route) => rows.find((row) => row.route_id === route.id)).filter(Boolean) as CacheRow[];
+  const newest = sorted.length
+    ? Math.max(...sorted.map((row) => new Date(row.updated_at).getTime()))
+    : Date.now();
+
+  return {
+    updatedAt: new Date(newest).toISOString(),
+    cacheSeconds: CACHE_TTL_MS / 1000,
+    source,
+    routes: sorted.map((row) => ({
+      id: row.route_id,
+      name: row.route_name,
+      status: row.status,
+      delayMinutes: row.delay_minutes,
+      travelTimeMinutes: row.travel_time_minutes,
+      freeFlowMinutes: row.free_flow_minutes,
+      averageSpeed: row.average_speed,
+      updatedAt: row.updated_at,
+    })),
+    ...(errors.length ? { diagnostics: errors } : {}),
+  };
 }
 
 export async function GET() {
@@ -132,6 +162,7 @@ export async function GET() {
     const cached = await readCache();
     let rows = cached;
     let source: 'cache' | 'tomtom' = 'cache';
+    let errors: string[] = [];
 
     if (!isFresh(cached)) {
       if (!refreshPromise) {
@@ -139,33 +170,15 @@ export async function GET() {
           refreshPromise = null;
         });
       }
-      rows = await refreshPromise;
+      const refreshed = await refreshPromise;
+      rows = refreshed.rows;
+      errors = refreshed.errors;
       source = 'tomtom';
     }
 
-    const sorted = ROUTES.map((route) => rows.find((row) => row.route_id === route.id)).filter(Boolean);
-    const newest = sorted.length
-      ? Math.max(...sorted.map((row) => new Date(row!.updated_at).getTime()))
-      : Date.now();
-
-    return NextResponse.json(
-      {
-        updatedAt: new Date(newest).toISOString(),
-        cacheSeconds: CACHE_TTL_MS / 1000,
-        source,
-        routes: sorted.map((row) => ({
-          id: row!.route_id,
-          name: row!.route_name,
-          status: row!.status,
-          delayMinutes: row!.delay_minutes,
-          travelTimeMinutes: row!.travel_time_minutes,
-          freeFlowMinutes: row!.free_flow_minutes,
-          averageSpeed: row!.average_speed,
-          updatedAt: row!.updated_at,
-        })),
-      },
-      { headers: { 'Cache-Control': 'no-store' } },
-    );
+    return NextResponse.json(toPayload(rows, source, errors), {
+      headers: { 'Cache-Control': 'no-store' },
+    });
   } catch (error) {
     return NextResponse.json(
       {
@@ -176,6 +189,44 @@ export async function GET() {
         error: error instanceof Error ? error.message : 'Onbekende fout',
       },
       { status: memoryCache.length ? 200 : 503, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json().catch(() => ({}));
+    const configuredCode = process.env.ADMIN_REFRESH_CODE;
+
+    if (!configuredCode) {
+      return NextResponse.json(
+        { error: 'ADMIN_REFRESH_CODE ontbreekt in Vercel.' },
+        { status: 500, headers: { 'Cache-Control': 'no-store' } },
+      );
+    }
+
+    if (String(body?.code ?? '') !== configuredCode) {
+      return NextResponse.json(
+        { error: 'Onjuiste admincode.' },
+        { status: 401, headers: { 'Cache-Control': 'no-store' } },
+      );
+    }
+
+    if (!refreshPromise) {
+      refreshPromise = refreshAll().finally(() => {
+        refreshPromise = null;
+      });
+    }
+    const refreshed = await refreshPromise;
+
+    return NextResponse.json(toPayload(refreshed.rows, 'admin', refreshed.errors), {
+      status: refreshed.errors.length === ROUTES.length ? 502 : 200,
+      headers: { 'Cache-Control': 'no-store' },
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Handmatig vernieuwen mislukt.' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } },
     );
   }
 }

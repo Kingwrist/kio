@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight, CircleHelp, Gauge, Route, TimerReset, X } from 'lucide-react';
+import { ChevronRight, CircleHelp, Gauge, LockKeyhole, RefreshCw, Route, TimerReset, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 type TrafficStatus = 'groen' | 'oranje' | 'rood' | 'onbekend';
@@ -20,6 +20,7 @@ type Payload = {
   source: string;
   routes: RouteData[];
   error?: string;
+  diagnostics?: string[];
 };
 
 const STATUS_COPY: Record<TrafficStatus, string> = {
@@ -48,6 +49,10 @@ export default function Home() {
   const [selected, setSelected] = useState<RouteData | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [adminCode, setAdminCode] = useState('');
+  const [adminBusy, setAdminBusy] = useState(false);
+  const [adminMessage, setAdminMessage] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -68,6 +73,30 @@ export default function Home() {
     const timer = window.setInterval(() => setNow(Date.now()), 30_000);
     return () => window.clearInterval(timer);
   }, []);
+
+
+  async function adminRefresh() {
+    setAdminBusy(true);
+    setAdminMessage('');
+    try {
+      const response = await fetch('/api/traffic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: adminCode }),
+      });
+      const payload = (await response.json()) as Payload;
+      if (!response.ok) throw new Error(payload.error || payload.diagnostics?.join(' · ') || 'Vernieuwen mislukt');
+      setData(payload);
+      setAdminMessage(payload.diagnostics?.length
+        ? `Vernieuwd, maar met meldingen: ${payload.diagnostics.join(' · ')}`
+        : 'Alle routes zijn handmatig vernieuwd.');
+      setAdminCode('');
+    } catch (error) {
+      setAdminMessage(error instanceof Error ? error.message : 'Vernieuwen mislukt');
+    } finally {
+      setAdminBusy(false);
+    }
+  }
 
   const summary = useMemo(() => {
     const routes = data?.routes || [];
@@ -128,7 +157,7 @@ export default function Home() {
           {!loading && !data?.routes.length && (
             <div className="emptyState">
               <strong>Verkeersinformatie niet bereikbaar</strong>
-              <p>Controleer de Vercel-variabelen en voer het Supabase SQL-script uit.</p>
+              <p>{data?.error || 'Controleer de Vercel-variabelen en voer het Supabase SQL-script uit.'}</p>
             </div>
           )}
         </div>
@@ -173,7 +202,46 @@ export default function Home() {
             <h2>Waarom elke vijf minuten?</h2>
             <p>KIO gebruikt professionele verkeersinformatie van TomTom. Iedere nieuwe meting gebruikt de betaalde API.</p>
             <p>Daarom delen alle bezoekers dezelfde meting en vernieuwt KIO maximaal één keer per vijf minuten. Zo blijft de informatie actueel, zonder onnodige kosten.</p>
-            <p className="muted">Er is bewust geen verversknop. Zodra een bezoeker de app opent en de meting ouder is dan vijf minuten, wordt automatisch nieuwe data opgehaald.</p>
+            <p className="muted">Voor bezoekers is er geen verversknop. Zodra de meting ouder is dan vijf minuten, wordt automatisch nieuwe data opgehaald.</p>
+            <button className="adminLink" onClick={() => { setHelpOpen(false); setAdminOpen(true); setAdminMessage(''); }}>
+              <LockKeyhole size={17} /> Admin vernieuwen
+            </button>
+          </article>
+        </div>
+      )}
+
+
+      {adminOpen && (
+        <div className="overlay" onClick={() => setAdminOpen(false)}>
+          <article className="sheet adminSheet" onClick={(event) => event.stopPropagation()}>
+            <button className="close" onClick={() => setAdminOpen(false)} aria-label="Sluiten"><X /></button>
+            <div className="helpIcon"><LockKeyhole /></div>
+            <p className="eyebrow dark">BEHEER</p>
+            <h2>Handmatig vernieuwen</h2>
+            <p>Voer de admincode in om alle routes direct opnieuw bij TomTom op te vragen. Dit omzeilt de wachttijd van vijf minuten.</p>
+            <label className="codeLabel" htmlFor="admin-code">Admincode</label>
+            <input
+              id="admin-code"
+              className="codeInput"
+              type="password"
+              inputMode="numeric"
+              autoComplete="off"
+              value={adminCode}
+              onChange={(event) => setAdminCode(event.target.value)}
+              onKeyDown={(event) => { if (event.key === 'Enter' && adminCode && !adminBusy) adminRefresh(); }}
+              placeholder="••••"
+            />
+            <button className="adminButton" disabled={!adminCode || adminBusy} onClick={adminRefresh}>
+              <RefreshCw size={18} className={adminBusy ? 'spin' : ''} />
+              {adminBusy ? 'Vernieuwen…' : 'Nu vernieuwen'}
+            </button>
+            {adminMessage && <p className="adminMessage">{adminMessage}</p>}
+            {data?.diagnostics?.length ? (
+              <div className="diagnostics">
+                <strong>Technische meldingen</strong>
+                {data.diagnostics.map((item) => <span key={item}>{item}</span>)}
+              </div>
+            ) : null}
           </article>
         </div>
       )}

@@ -40,3 +40,13 @@ De vaste start- en eindpunten staan in `app/lib/routes.ts`. Controleer de twee n
 ## Volgende fase
 
 De UI bevat alvast een visuele aankondiging voor Veer Krimpen aan de Lek. Later kan die als zesde route dezelfde statuslogica krijgen.
+
+## Admin handmatig vernieuwen
+
+Voeg in Vercel toe:
+
+```env
+ADMIN_REFRESH_CODE=1502
+```
+
+De knop staat onder het vraagteken rechtsboven: **Admin vernieuwen**. De code wordt uitsluitend server-side gecontroleerd. De handmatige actie vernieuwt alle routes direct en toont eventuele TomTom-foutmeldingen in het beheerscherm.
