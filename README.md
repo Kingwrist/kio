@@ -1,19 +1,42 @@
-# KIO v17 – NDW meetvakken en wisselstrook
+# KIO v19 — Krimpen Uit
 
-Gebouwd op KIO v16. De bestaande persoonlijke reistijd, ponten, camera’s en routekeuze zijn behouden.
+Productiegerichte herbouw van KIO. Geen GPS, kaart, persoonlijke route of handmatige verversknop. De app toont vijf vaste uitgaande routes richting de Algerabrug.
 
-## Nieuw in v17
+## Werking
 
-- Officiële NDW-meetvakgeometrieën uit de aangeleverde shapefile.
-- Alleen de bruikbare wegdelen rond de Algerabrug en de N210-aanrijroute naar de pont.
-- Drie eenvoudige kleuren: groen (vrij), oranje (druk), rood (vertraging).
-- Grijs wanneer geen betrouwbare actuele NDW-meting beschikbaar is.
-- Wisselstrook als aparte gestreepte lijn, met open/gesloten status en toegangsregels.
-- Minder technische informatie in de pop-up; alleen status, snelheid, lengte en bron.
-- Alle functies uit v16 blijven aanwezig.
+- Bij openen leest de server de gedeelde Supabase-cache.
+- Is de volledige cache jonger dan vijf minuten, dan volgen geen TomTom-aanroepen.
+- Is de cache ouder, dan wordt één gedeelde verversing gestart.
+- Gelijktijdige bezoekers delen dezelfde refresh-promise, zodat binnen één server-instance niet meerdere identieke updates tegelijk lopen.
+- De interface toont de laatste update en legt via het vraagteken uit waarom maximaal eens per vijf minuten wordt vernieuwd.
 
-## Release
+## Vereiste Vercel-variabelen
 
-- Buildnaam: `KIO v17 – NDW meetvakken en wisselstrook`
-- Commit: `KIO v17 NDW meetvakken en wisselstrook`
-- Tag: `v17`
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://gbvxnsqvagtvesbieugo.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
+SUPABASE_SECRET_KEY=...
+TOMTOM_API_KEY=...
+```
+
+`SUPABASE_SECRET_KEY` is nodig voor server-side writes. Gebruik bij een ouder Supabase-project eventueel `SUPABASE_SERVICE_ROLE_KEY`; de code ondersteunt beide namen. Deel deze sleutel nooit en prefix hem niet met `NEXT_PUBLIC_`.
+
+## Database
+
+Open Supabase → SQL Editor en voer `supabase/setup.sql` uit.
+
+## Installeren
+
+```bash
+npm install
+npm run build
+npm run dev
+```
+
+## Routepunten
+
+De vaste start- en eindpunten staan in `app/lib/routes.ts`. Controleer de twee nieuw toegevoegde startpunten (`Boerhaavelaan` en `Van Ostadelaan`) tijdens een praktijktest en verfijn ze zo nodig naar de gewenste rijbaan.
+
+## Volgende fase
+
+De UI bevat alvast een visuele aankondiging voor Veer Krimpen aan de Lek. Later kan die als zesde route dezelfde statuslogica krijgen.
