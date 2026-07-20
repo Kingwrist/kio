@@ -157,14 +157,16 @@ function toPayload(rows: CacheRow[], source: 'cache' | 'tomtom' | 'admin', error
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const cached = await readCache();
+    const mode = new URL(request.url).searchParams.get('mode');
+    const mayRefresh = mode !== 'cache';
     let rows = cached;
     let source: 'cache' | 'tomtom' = 'cache';
     let errors: string[] = [];
 
-    if (!isFresh(cached)) {
+    if (mayRefresh && !isFresh(cached)) {
       if (!refreshPromise) {
         refreshPromise = refreshAll().finally(() => {
           refreshPromise = null;
