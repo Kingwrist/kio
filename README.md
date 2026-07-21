@@ -1,4 +1,4 @@
-# KIO v20.4
+# KIO v20.5
 
 Deze versie behoudt het bestaande v20-ontwerp en voegt toe:
 
@@ -8,7 +8,9 @@ Deze versie behoudt het bestaande v20-ontwerp en voegt toe:
 - een compacte waarschuwing voor de werkzaamheden aan de Algerabrug;
 - een werkzaamhedenoverzicht met de periodes 19–23 juli, 20 juli–9 augustus, 20 juli–21 september en 10 augustus–7 september 2026;
 - een Algerabrug-item in het bestaande menu;
-- automatische afsluitingsmodus: van 10 augustus tot 7 september krijgt de waarschuwing de status “volledig afgesloten”;
+- automatische datum- en tijdsreacties voor de nachtafsluitingen van 19 t/m 23 juli, de versmalde rijstroken, de aftelling vanaf 1 augustus en de volledige afsluiting van 10 augustus tot 7 september;
+- tijdens een actieve nachtafsluiting meldt KIO dat autoverkeer niet kan passeren, terwijl wandelaars, fietsers en brommers wel over de brug kunnen;
+- tijdens de volledige afsluiting worden de veerroutes automatisch boven de autoroutes geplaatst;
 - de camerafix uit v20.2 blijft behouden.
 
 ## Belangrijk
