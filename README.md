@@ -50,3 +50,8 @@ ADMIN_REFRESH_CODE=1502
 ```
 
 De knop staat onder het vraagteken rechtsboven: **Admin vernieuwen**. De code wordt uitsluitend server-side gecontroleerd. De handmatige actie vernieuwt alle routes direct en toont eventuele TomTom-foutmeldingen in het beheerscherm.
+
+## v20.2 camerafix
+
+- De laad-overlay verschijnt alleen bij de eerste verbinding en niet meer bij korte HLS-bufferpauzes.
+- Volledig scherm gebruikt native fullscreen waar mogelijk en een schermvullende fallback op mobiele browsers.
