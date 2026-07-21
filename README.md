@@ -1,57 +1,27 @@
-# KIO v19 — Krimpen Uit
+# KIO v20.4
 
-Productiegerichte herbouw van KIO. Geen GPS, kaart, persoonlijke route of handmatige verversknop. De app toont vijf vaste uitgaande routes richting de Algerabrug.
+Deze versie behoudt het bestaande v20-ontwerp en voegt toe:
 
-## Werking
+- één favoriete route, lokaal opgeslagen op het toestel;
+- drie TomTom-routes naar de veerponten Krimpen aan de Lek, Bergambacht/Bergstoep en Schoonhoven;
+- route-details zonder totale reistijd;
+- een compacte waarschuwing voor de werkzaamheden aan de Algerabrug;
+- een werkzaamhedenoverzicht met de periodes 19–23 juli, 20 juli–9 augustus, 20 juli–21 september en 10 augustus–7 september 2026;
+- een Algerabrug-item in het bestaande menu;
+- automatische afsluitingsmodus: van 10 augustus tot 7 september krijgt de waarschuwing de status “volledig afgesloten”;
+- de camerafix uit v20.2 blijft behouden.
 
-- Bij openen leest de server de gedeelde Supabase-cache.
-- Is de volledige cache jonger dan vijf minuten, dan volgen geen TomTom-aanroepen.
-- Is de cache ouder, dan wordt één gedeelde verversing gestart.
-- Gelijktijdige bezoekers delen dezelfde refresh-promise, zodat binnen één server-instance niet meerdere identieke updates tegelijk lopen.
-- De interface toont de laatste update en legt via het vraagteken uit waarom maximaal eens per vijf minuten wordt vernieuwd.
+## Belangrijk
 
-## Vereiste Vercel-variabelen
+De live stand van de brug is nog niet gekoppeld. Het bruginformatiescherm maakt dit expliciet zichtbaar. Koppel pas een bron nadat een stabiele en toegestane officiële API is vastgesteld; de werkzaamhedeninformatie is wel direct bruikbaar.
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://gbvxnsqvagtvesbieugo.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
-SUPABASE_SECRET_KEY=...
-TOMTOM_API_KEY=...
-```
+## Installatie
 
-`SUPABASE_SECRET_KEY` is nodig voor server-side writes. Gebruik bij een ouder Supabase-project eventueel `SUPABASE_SERVICE_ROLE_KEY`; de code ondersteunt beide namen. Deel deze sleutel nooit en prefix hem niet met `NEXT_PUBLIC_`.
+Gebruik dezelfde Vercel-variabelen als v20.2:
 
-## Database
+- `TOMTOM_API_KEY`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `ADMIN_REFRESH_CODE`
 
-Open Supabase → SQL Editor en voer `supabase/setup.sql` uit.
-
-## Installeren
-
-```bash
-npm install
-npm run build
-npm run dev
-```
-
-## Routepunten
-
-De vaste start- en eindpunten staan in `app/lib/routes.ts`. Controleer de twee nieuw toegevoegde startpunten (`Boerhaavelaan` en `Van Ostadelaan`) tijdens een praktijktest en verfijn ze zo nodig naar de gewenste rijbaan.
-
-## Volgende fase
-
-De UI bevat alvast een visuele aankondiging voor Veer Krimpen aan de Lek. Later kan die als zesde route dezelfde statuslogica krijgen.
-
-## Admin handmatig vernieuwen
-
-Voeg in Vercel toe:
-
-```env
-ADMIN_REFRESH_CODE=1502
-```
-
-De knop staat onder het vraagteken rechtsboven: **Admin vernieuwen**. De code wordt uitsluitend server-side gecontroleerd. De handmatige actie vernieuwt alle routes direct en toont eventuele TomTom-foutmeldingen in het beheerscherm.
-
-## v20.2 camerafix
-
-- De laad-overlay verschijnt alleen bij de eerste verbinding en niet meer bij korte HLS-bufferpauzes.
-- Volledig scherm gebruikt native fullscreen waar mogelijk en een schermvullende fallback op mobiele browsers.
+De bestaande `route_cache`-tabel werkt ook voor de nieuwe veerroutes. De eerste geldige verversing voegt de drie nieuwe route-id’s via upsert toe.

@@ -1,6 +1,6 @@
 {
   "name": "kio-krimpen-uit",
-  "version": "20.2.0",
+  "version": "20.4.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
